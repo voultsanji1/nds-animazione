@@ -109,7 +109,7 @@ int main(void) {
     vramSetBankA(VRAM_A_MAIN_SPRITE);
 
     videoSetModeSub(MODE_0_2D);
-    vramSetBankD(VRAM_D_SUB_BG);
+    vramSetBankC(VRAM_C_SUB_BG);
     consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 15, 0, false, true);
 
     oamInit(&oamMain, SpriteMapping_1D_128, false);
