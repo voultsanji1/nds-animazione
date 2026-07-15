@@ -93,16 +93,18 @@ void load_palettes(void) {
 
 int main(void) {
     consoleDemoInit();
-    log_init();
 
+    iprintf("NDS Animazione Sprite - Avvio\n");
+
+    bool fat_ok = fatInitDefault();
+    if (!fat_ok) {
+        iprintf("[WARN] FatInit fallito - log su file non disponibile\n");
+    }
+
+    log_init();
     log_write("NDS Animazione Sprite - Avvio");
     log_write("Premi START per uscire");
-
-    if (!fatInitDefault()) {
-        log_write("[ERROR] FatInit fallito - log su file non disponibile");
-    } else {
-        log_write("[INFO] Filesystem FAT inizializzato");
-    }
+    log_write("[INFO] Filesystem FAT: %s", fat_ok ? "OK" : "FALLITO");
 
     videoSetMode(MODE_0_2D);
     videoSetModeSub(MODE_0_2D);
