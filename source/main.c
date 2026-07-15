@@ -57,6 +57,7 @@ void create_sprite_frames(void) {
             log_write("[ERROR] Errore allocazione gfx sprite %d", i);
             continue;
         }
+        u8 *gfx = (u8 *)spriteGfx[i];
         for (int py = 0; py < 32; py++) {
             for (int px = 0; px < 32; px += 2) {
                 u8 p0 = 0, p1 = 0;
@@ -78,7 +79,7 @@ void create_sprite_frames(void) {
                         p1 = ((((px + 1) / 4) + (py / 4)) % 2 == 0) ? 1 : 0;
                         break;
                 }
-                spriteGfx[i][py * 16 + (px / 2)] = p0 | (p1 << 4);
+                gfx[py * 16 + (px / 2)] = p0 | (p1 << 4);
             }
         }
     }
@@ -107,10 +108,19 @@ int main(void) {
     videoSetMode(MODE_0_2D);
     vramSetBankA(VRAM_A_MAIN_SPRITE);
 
+    videoSetModeSub(MODE_0_2D);
+    vramSetBankD(VRAM_D_SUB_BG);
+    consoleInit(NULL, 0, BgType_Text4bpp, BgSize_T_256x256, 15, 0, false, true);
+
     oamInit(&oamMain, SpriteMapping_1D_128, false);
 
     load_palettes();
     create_sprite_frames();
+
+    iprintf("NDS Animazione\n");
+    iprintf("FAT: %s\n", fat_ok ? "OK" : "no");
+    iprintf("Sprite: %d\n", NUM_SPRITES);
+    iprintf("START=esci\n");
 
     for (int i = 0; i < NUM_SPRITES; i++) {
         spriteX[i] = (i % 4) * 56 + 16;
@@ -162,6 +172,7 @@ int main(void) {
         frame_count++;
         if (frame_count % 60 == 0) {
             log_write("[DEBUG] Frame %d - sprite attivi: %d", frame_count, NUM_SPRITES);
+            iprintf("Frame: %d\n", frame_count);
         }
 
         swiWaitForVBlank();
