@@ -16,13 +16,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build NDS ROM
+      - name: Verify environment
         run: |
-          export DEVKITARM=${DEVKITARM}
-          make
+          echo "DEVKITARM=$DEVKITARM"
+          echo "DEVKITPRO=$DEVKITPRO"
+          which arm-none-eabi-gcc
+          arm-none-eabi-gcc --version
+          ls $DEVKITARM/base_rules || ls $DEVKITARM/ds_rules
+
+      - name: Build NDS ROM
+        shell: bash
+        run: make
 
       - name: Upload NDS ROM
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: animazione-nds
           path: build/animazione.nds
@@ -36,6 +44,7 @@ jobs:
           path: |
             build/*.map
             build/*.d
+            build/*.elf
           retention-days: 30
           if-no-files-found: ignore
 
