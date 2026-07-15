@@ -22,7 +22,7 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv5te -mtune=arm946e-s -mthumb
+ARCH	:=	-march=armv5te -mtune=arm946e-s
 
 CFLAGS	:=	-g -Wall -O2 -ffunction-sections -fdata-sections\
 			$(ARCH)

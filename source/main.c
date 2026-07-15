@@ -41,7 +41,6 @@ void log_write(const char *fmt, ...) {
         fprintf(log_file, "%s\n", buf);
         fflush(log_file);
     }
-    iprintf("%s\n", buf);
 }
 
 static u16 *spriteGfx[4];
@@ -59,19 +58,27 @@ void create_sprite_frames(void) {
             continue;
         }
         for (int py = 0; py < 32; py++) {
-            for (int px = 0; px < 32; px++) {
-                int idx = py * 16 + (px / 2);
-                u8 pixel = 0;
+            for (int px = 0; px < 32; px += 2) {
+                u8 p0 = 0, p1 = 0;
                 switch (i) {
-                    case 0: if ((px + py) % 8 < 4) pixel = 1; break;
-                    case 1: if ((px * py) % 7 < 3) pixel = 2; break;
-                    case 2: if (abs(px - 16) + abs(py - 16) < 12) pixel = 3; break;
-                    case 3: if (((px / 4) + (py / 4)) % 2 == 0) pixel = 1; break;
+                    case 0:
+                        p0 = ((px + py) % 8 < 4) ? 1 : 0;
+                        p1 = ((px + 1 + py) % 8 < 4) ? 1 : 0;
+                        break;
+                    case 1:
+                        p0 = ((px * py) % 7 < 3) ? 2 : 0;
+                        p1 = (((px + 1) * py) % 7 < 3) ? 2 : 0;
+                        break;
+                    case 2:
+                        p0 = (abs(px - 16) + abs(py - 16) < 12) ? 3 : 0;
+                        p1 = (abs(px + 1 - 16) + abs(py - 16) < 12) ? 3 : 0;
+                        break;
+                    case 3:
+                        p0 = (((px / 4) + (py / 4)) % 2 == 0) ? 1 : 0;
+                        p1 = ((((px + 1) / 4) + (py / 4)) % 2 == 0) ? 1 : 0;
+                        break;
                 }
-                if (px % 2 == 0)
-                    spriteGfx[i][idx] = pixel | (pixel << 8);
-                else
-                    spriteGfx[i][idx] = (spriteGfx[i][idx] & 0xFF) | (pixel << 8);
+                spriteGfx[i][py * 16 + (px / 2)] = p0 | (p1 << 4);
             }
         }
     }
@@ -92,37 +99,22 @@ void load_palettes(void) {
 }
 
 int main(void) {
-    consoleDemoInit();
-
-    iprintf("NDS Animazione Sprite - Avvio\n");
-
     bool fat_ok = fatInitDefault();
-    if (!fat_ok) {
-        iprintf("[WARN] FatInit fallito - log su file non disponibile\n");
-    }
-
     log_init();
     log_write("NDS Animazione Sprite - Avvio");
-    log_write("Premi START per uscire");
-    log_write("[INFO] Filesystem FAT: %s", fat_ok ? "OK" : "FALLITO");
+    log_write("[INFO] Filesystem FAT: %s", fat_ok ? "OK" : "FALLITO (normale su emulatore senza SD)");
 
     videoSetMode(MODE_0_2D);
-    videoSetModeSub(MODE_0_2D);
-
     vramSetBankA(VRAM_A_MAIN_SPRITE);
-    vramSetBankD(VRAM_D_SUB_SPRITE);
 
     oamInit(&oamMain, SpriteMapping_1D_128, false);
-    oamInit(&oamSub, SpriteMapping_1D_128, false);
-
-    log_write("[INFO] VRAM e OAM configurati");
 
     load_palettes();
     create_sprite_frames();
 
     for (int i = 0; i < NUM_SPRITES; i++) {
-        spriteX[i] = (i % 4) * 60 + 10;
-        spriteY[i] = (i / 4) * 55 + 10;
+        spriteX[i] = (i % 4) * 56 + 16;
+        spriteY[i] = (i / 4) * 56 + 16;
         spriteVX[i] = (i % 2 == 0 ? 1 : -1) * (1 + (i % 3));
         spriteVY[i] = (i % 3 == 0 ? 1 : -1) * (1 + (i % 2));
         spriteFrame[i] = i % 4;
@@ -135,9 +127,7 @@ int main(void) {
 
     while (1) {
         scanKeys();
-        u16 keys = keysHeld();
-
-        if (keys & KEY_START) {
+        if (keysHeld() & KEY_START) {
             log_write("[INFO] Premuto START - uscita");
             break;
         }
@@ -155,9 +145,11 @@ int main(void) {
                 spriteY[i] += spriteVY[i];
             }
 
+            spriteFrame[i] = (spriteFrame[i] + 1) % 4;
+
             oamSet(&oamMain, i,
                    spriteX[i], spriteY[i],
-                   0, spriteFrame[i],
+                   0, 0,
                    SpriteSize_32x32,
                    SpriteColorFormat_16Color,
                    spriteGfx[spriteFrame[i]],
