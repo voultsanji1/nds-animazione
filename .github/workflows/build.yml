@@ -16,17 +16,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Verify environment
-        run: |
-          echo "DEVKITARM=$DEVKITARM"
-          echo "DEVKITPRO=$DEVKITPRO"
-          which arm-none-eabi-gcc
-          arm-none-eabi-gcc --version
-          ls $DEVKITARM/base_rules || ls $DEVKITARM/ds_rules
-
       - name: Build NDS ROM
         shell: bash
-        run: make
+        run: |
+          export PATH="/opt/devkitpro/devkitARM/bin:$PATH"
+          export DEVKITARM=/opt/devkitpro/devkitARM
+          export DEVKITPRO=/opt/devkitpro
+          arm-none-eabi-gcc --version
+          make
 
       - name: Upload NDS ROM
         uses: actions/upload-artifact@v4
